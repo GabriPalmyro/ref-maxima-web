@@ -16,6 +16,7 @@ import { LottieLoading } from "@/components/lottie-loading";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState, type ComponentType } from "react";
 import { api } from "@/lib/api";
+import { InstagramPhonePreview } from "@/components/instagram-phone-preview";
 
 interface Mentee {
   id: string;
@@ -35,6 +36,17 @@ interface Report {
   rawResponse: string | null;
   answers?: Record<string, string>;
   generatedAt: string;
+}
+
+interface InstagramDraftResponse {
+  id: string;
+  menteeId: string;
+  fullName: string | null;
+  biography: string | null;
+  profilePicUrl: string | null;
+  externalUrl: string | null;
+  posts: Array<{ position: number; imageUrl: string; originalPostId?: string }>;
+  updatedAt: string;
 }
 
 interface ReportCardConfig {
@@ -92,16 +104,19 @@ export default function MenteeDetailPage() {
   const [reports, setReports] = useState<Report[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
+  const [instagramDraft, setInstagramDraft] = useState<InstagramDraftResponse | null>(null);
 
   useEffect(() => {
     async function load() {
       try {
-        const [menteeData, reportsData] = await Promise.all([
+        const [menteeData, reportsData, draftData] = await Promise.all([
           api.get<Mentee>(`/mentor/mentees/${id}`),
           api.get<Report[]>(`/mentor/mentees/${id}/reports`),
+          api.get<InstagramDraftResponse>(`/mentor/mentees/${id}/instagram-draft`).catch(() => null),
         ]);
         setMentee(menteeData);
         setReports(reportsData);
+        setInstagramDraft(draftData);
       } catch {
         router.push("/home");
       } finally {
@@ -373,6 +388,19 @@ export default function MenteeDetailPage() {
               </button>
             );
           })()}
+
+          {/* Instagram profile preview */}
+          {instagramDraft && (
+            <div className="mt-16">
+              <InstagramPhonePreview
+                fullName={instagramDraft.fullName}
+                biography={instagramDraft.biography}
+                profilePicUrl={instagramDraft.profilePicUrl}
+                externalUrl={instagramDraft.externalUrl}
+                posts={instagramDraft.posts}
+              />
+            </div>
+          )}
           </div>
         </div>
       </main>
