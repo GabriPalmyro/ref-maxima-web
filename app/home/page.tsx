@@ -337,9 +337,13 @@ export default function HomePage() {
                           mentee.name[0]
                         )}
                       </div>
-                      <p className="truncate text-[12px] font-semibold text-[#71717a]">
+                      <button
+                        type="button"
+                        onClick={() => router.push(`/mentorados/${mentee.id}`)}
+                        className="truncate text-[12px] font-semibold text-[#71717a] hover:text-zinc-900 hover:underline"
+                      >
                         {mentee.name}
-                      </p>
+                      </button>
                     </div>
                     <p className="flex items-center text-[12px] font-semibold text-[#71717a]">
                       {mentee.instagram ? `@${mentee.instagram.replace(/^@/, "")}` : mentee.email}
