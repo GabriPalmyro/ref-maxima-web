@@ -33,14 +33,14 @@ export default function PerfilPage() {
       let avatarUrl = mentor?.avatarUrl;
 
       if (avatarFile) {
-        const reader = new FileReader();
-        avatarUrl = await new Promise<string>((resolve) => {
-          reader.onload = () => resolve(reader.result as string);
-          reader.readAsDataURL(avatarFile);
-        });
+        const result = await api.upload<{ url: string }>(
+          "/mentor/profile/avatar",
+          avatarFile,
+        );
+        avatarUrl = result.url;
       }
 
-      await api.put("/mentor/profile", { name, avatarUrl });
+      await api.put("/mentor/profile", { name });
       updateMentor({ name, avatarUrl });
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
