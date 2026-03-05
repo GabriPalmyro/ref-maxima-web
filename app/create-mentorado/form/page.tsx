@@ -103,10 +103,10 @@ function FormContent() {
       </button>
 
       <div className="flex w-full max-w-3xl flex-1 flex-col items-center justify-between pb-8 mt-20 md:mt-12">
-        <div className="mt-12 w-full px-4 text-center md:px-0">
+        <div className="flex flex-1 flex-col items-center justify-center w-full px-4 md:px-0">
           <h1
             key={`title-${currentStep}`}
-            className="mb-8 animate-fade-in-up text-2xl font-medium tracking-tight text-zinc-900 md:text-[32px]"
+            className="mb-8 animate-fade-in-up text-2xl font-medium tracking-tight text-zinc-900 md:text-[32px] text-center"
           >
             {questions.length > 1 && `${currentStep + 1}. `}{questions[currentStep]}
           </h1>
@@ -132,7 +132,7 @@ function FormContent() {
           </div>
         </div>
 
-        <div className="mt-auto flex w-full justify-center pt-10">
+        <div className="flex w-full justify-center pt-10">
           <button
             onClick={handleNext}
             disabled={!answers[currentStep].trim()}

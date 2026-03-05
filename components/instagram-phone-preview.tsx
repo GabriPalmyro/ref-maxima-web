@@ -12,6 +12,7 @@ interface InstagramPhonePreviewProps {
   profilePicUrl: string | null;
   externalUrl: string | null;
   posts: DraftPost[];
+  updatedAt?: string | null;
 }
 
 export function InstagramPhonePreview({
@@ -20,11 +21,28 @@ export function InstagramPhonePreview({
   profilePicUrl,
   externalUrl,
   posts,
+  updatedAt,
 }: InstagramPhonePreviewProps) {
   const sortedPosts = [...posts].sort((a, b) => a.position - b.position);
 
+  const formattedDate = updatedAt
+    ? new Date(updatedAt).toLocaleDateString("pt-BR", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : null;
+
   return (
-    // 932px * (1 - 0.65) ≈ 326px — compensates for space left by CSS scale
+    <div>
+      {formattedDate && (
+        <p className="mb-3 text-center text-xs font-medium text-zinc-400">
+          Atualizado em {formattedDate}
+        </p>
+      )}
+    {/* 932px * (1 - 0.65) ≈ 326px — compensates for space left by CSS scale */}
     <div className="origin-top" style={{ transform: "scale(0.65)", marginBottom: "-326px" }}>
     <div
       className="relative mx-auto h-[932px] w-[430px] overflow-hidden rounded-[40px] shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)]"
@@ -198,6 +216,7 @@ export function InstagramPhonePreview({
 
       {/* Bottom home indicator */}
       <div className="absolute bottom-2 left-1/2 h-[5px] w-[123px] -translate-x-1/2 rounded-full bg-black" />
+    </div>
     </div>
     </div>
   );
