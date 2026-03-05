@@ -2,9 +2,9 @@
 
 import { Copy, FileDown } from "lucide-react";
 import Image from "next/image";
-import ReactMarkdown from "react-markdown";
+import { FullScreenGenerationLoading } from "@/components/fullscreen-generation-loading";
 import { LottieLoading } from "@/components/lottie-loading";
-import { LottieAiLoading } from "@/components/lottie-ai-loading";
+import { ReportRenderer } from "@/components/report-renderer";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { api } from "@/lib/api";
@@ -15,6 +15,7 @@ interface Report {
   status: string;
   title: string;
   rawResponse: string | null;
+  structuredContent?: Record<string, unknown> | null;
   generatedAt: string;
 }
 
@@ -179,7 +180,7 @@ function ResultContent() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center bg-[#F9F8F5] font-(family-name:--font-inter)">
+    <div className="flex h-screen flex-col items-center overflow-hidden bg-[#F9F8F5] font-(family-name:--font-inter)">
       {/* Top bar */}
       <div className="relative flex w-full shrink-0 items-center justify-between px-10 py-5">
         <Image
@@ -197,44 +198,27 @@ function ResultContent() {
       </div>
 
       {/* Card area */}
-      <div className="flex w-full flex-1 flex-col items-center px-4 pb-6">
+      <div className="flex min-h-0 w-full flex-1 flex-col items-center px-4 pb-6">
 
         {/* ── Polling state ── */}
         {isPolling && (
-          <div
-            className="relative flex w-full max-w-[823px] flex-col overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-[0px_8px_10px_-6px_rgba(0,0,0,0.1),0px_20px_25px_-5px_rgba(0,0,0,0.1)]"
-            style={{ height: "min(613px, calc(100vh - 200px))" }}
-          >
-            {/* Card header */}
-            <div className="flex h-[46px] shrink-0 items-center justify-between border-b border-zinc-200 bg-white px-[21px]">
-              <p className="text-[14px] font-medium leading-[17.568px] text-black">
-                {ROUND_LABELS[round]}
-              </p>
-              <p className="text-[14px] font-medium text-yellow-600">
-                Gerando...
-              </p>
-              <span className="w-5" />
-            </div>
-
-            {/* Body */}
-            <div className="relative flex-1 overflow-hidden px-[89px] pt-[96px] pb-[100px]">
-              <div className="pointer-events-none absolute -right-16 top-[133px] select-none opacity-[0.06]">
-                <Image src="/images/asterisk.svg" alt="" width={310} height={352} />
-              </div>
-              <Image src="/images/asterisk.svg" alt="" width={33} height={37} className="mb-[11px]" />
-              <LottieAiLoading className="flex flex-col items-start" size="w-36" />
-              <p className="mt-2 text-sm text-zinc-400">
-                Gerando {ROUND_LABELS[round]}...
-              </p>
-            </div>
-          </div>
+          <FullScreenGenerationLoading
+            messages={[
+              "Analisando as respostas...",
+              "Construindo o perfil estratégico...",
+              "Identificando padrões comportamentais...",
+              "Mapeando desejos e dores...",
+              "Gerando diagnóstico profundo...",
+              "Estruturando o posicionamento...",
+              "Finalizando o documento...",
+            ]}
+          />
         )}
 
         {/* ── Poll error state ── */}
         {pollError && (
           <div
-            className="relative flex w-full max-w-[823px] flex-col overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-[0px_8px_10px_-6px_rgba(0,0,0,0.1),0px_20px_25px_-5px_rgba(0,0,0,0.1)]"
-            style={{ height: "min(613px, calc(100vh - 200px))" }}
+            className="relative flex w-full max-w-[1340px] flex-1 flex-col overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-[0px_8px_10px_-6px_rgba(0,0,0,0.1),0px_20px_25px_-5px_rgba(0,0,0,0.1)]"
           >
             <div className="flex h-[46px] shrink-0 items-center justify-between border-b border-zinc-200 bg-white px-[21px]">
               <p className="text-[14px] font-medium text-black">{ROUND_LABELS[round]}</p>
@@ -250,10 +234,9 @@ function ResultContent() {
         {/* ── Report completed ── */}
         {report && (
           <div
-            className={`relative flex w-full max-w-[823px] flex-col overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-[0px_8px_10px_-6px_rgba(0,0,0,0.1),0px_20px_25px_-5px_rgba(0,0,0,0.1)]${
+            className={`relative flex min-h-0 w-full max-w-[1340px] flex-1 flex-col overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-[0px_8px_10px_-6px_rgba(0,0,0,0.1),0px_20px_25px_-5px_rgba(0,0,0,0.1)]${
               generating ? " animate-fade-in-up" : ""
             }`}
-            style={{ height: "min(613px, calc(100vh - 200px))" }}
           >
             {/* Card header */}
             <div className="flex h-[46px] shrink-0 items-center justify-between border-b border-zinc-200 bg-white px-[21px]">
@@ -296,10 +279,12 @@ function ResultContent() {
                 {report.title}
               </h2>
 
-              {/* Markdown content */}
-              <div className="[&_hr]:my-4 [&_hr]:border-zinc-200 [&_li]:text-[16px] [&_li]:leading-[18px] [&_li]:text-black [&_ol]:mb-[9px] [&_ol]:list-decimal [&_ol]:pl-6 [&_p]:mb-[9px] [&_p]:text-[16px] [&_p]:leading-[18px] [&_p]:text-black [&_strong]:font-semibold [&_ul]:mb-[9px] [&_ul]:list-disc [&_ul]:pl-6">
-                <ReactMarkdown>{report.rawResponse ?? ""}</ReactMarkdown>
-              </div>
+              {/* Report content */}
+              <ReportRenderer
+                type={report.type}
+                structuredContent={report.structuredContent}
+                rawResponse={report.rawResponse}
+              />
             </div>
 
             {/* Bottom gradient overlay */}
@@ -309,7 +294,7 @@ function ResultContent() {
 
         {/* Invite code — round 3 only */}
         {round === 3 && !isPolling && !pollError && report && (
-          <div className="mt-4 flex w-full max-w-[823px] items-center gap-3 rounded-lg border border-zinc-200 bg-white px-6 py-4 shadow-sm">
+          <div className="mt-4 flex w-full max-w-[1340px] shrink-0 items-center gap-3 rounded-lg border border-zinc-200 bg-white px-6 py-4 shadow-sm">
             <span className="text-sm font-medium text-zinc-500">Código de convite:</span>
             {inviteCode ? (
               <>
@@ -337,7 +322,7 @@ function ResultContent() {
 
         {/* Actions */}
         {!isPolling && !pollError && (
-          <div className="mt-8 flex flex-col items-center gap-4">
+          <div className="mt-4 flex shrink-0 flex-col items-center gap-4">
             <button
               type="button"
               onClick={handleNext}
