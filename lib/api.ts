@@ -72,6 +72,38 @@ async function request<T>(
   return res.json();
 }
 
+async function uploadFile<T>(path: string, file: File, fieldName = 'file'): Promise<T> {
+  const token = getToken();
+  const formData = new FormData();
+  formData.append(fieldName, file);
+
+  const headers: Record<string, string> = {};
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const res = await fetch(`${BASE_URL}${path}`, {
+    method: 'POST',
+    headers,
+    body: formData,
+  });
+
+  if (res.status === 401) {
+    localStorage.removeItem('token');
+    localStorage.removeItem('mentor');
+    document.cookie = 'token=; path=/; max-age=0';
+    window.location.href = '/';
+    throw new Error('Unauthorized');
+  }
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(friendlyMessage(res.status, body.message));
+  }
+
+  return res.json();
+}
+
 export const api = {
   get: <T>(path: string) => request<T>(path),
   post: <T>(path: string, body: unknown) =>
@@ -79,4 +111,6 @@ export const api = {
   put: <T>(path: string, body: unknown) =>
     request<T>(path, { method: 'PUT', body: JSON.stringify(body) }),
   delete: <T>(path: string) => request<T>(path, { method: 'DELETE' }),
+  upload: <T>(path: string, file: File, fieldName?: string) =>
+    uploadFile<T>(path, file, fieldName),
 };
