@@ -5,6 +5,7 @@ import Image from "next/image";
 import { FullScreenGenerationLoading } from "@/components/fullscreen-generation-loading";
 import { LottieLoading } from "@/components/lottie-loading";
 import { ReportRenderer } from "@/components/report-renderer";
+import { TypewriterText } from "@/components/typewriter-text";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { api } from "@/lib/api";
@@ -55,6 +56,8 @@ function ResultContent() {
   const [isPolling, setIsPolling] = useState(false);
   const [pollError, setPollError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [showTypewriter, setShowTypewriter] = useState(false);
+  const [typewriterComplete, setTypewriterComplete] = useState(false);
 
   const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pollStartRef = useRef<number>(0);
@@ -97,6 +100,7 @@ function ResultContent() {
 
         if (found && found.status === "COMPLETED") {
           setReport(found);
+          if (generating) setShowTypewriter(true);
           stopPolling();
           if (round === 3) fetchInviteCode();
         } else if (found && found.status === "ERROR") {
@@ -280,11 +284,19 @@ function ResultContent() {
               </h2>
 
               {/* Report content */}
-              <ReportRenderer
-                type={report.type}
-                structuredContent={report.structuredContent}
-                rawResponse={report.rawResponse}
-              />
+              {showTypewriter && !typewriterComplete ? (
+                <TypewriterText
+                  text={report.rawResponse ?? ""}
+                  speed={5}
+                  onComplete={() => setTypewriterComplete(true)}
+                />
+              ) : (
+                <ReportRenderer
+                  type={report.type}
+                  structuredContent={report.structuredContent}
+                  rawResponse={report.rawResponse}
+                />
+              )}
             </div>
 
             {/* Bottom gradient overlay */}
@@ -321,7 +333,7 @@ function ResultContent() {
         )}
 
         {/* Actions */}
-        {!isPolling && !pollError && (
+        {!isPolling && !pollError && (!showTypewriter || typewriterComplete) && (
           <div className="mt-4 flex shrink-0 flex-col items-center gap-4">
             <button
               type="button"
