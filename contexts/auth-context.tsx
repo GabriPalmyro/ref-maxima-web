@@ -22,6 +22,7 @@ interface AuthContextValue {
   mentor: Mentor | null;
   login: (token: string) => Promise<void>;
   logout: () => void;
+  updateMentor: (updated: Partial<Mentor>) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -47,6 +48,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setMentor(profile);
   };
 
+  const updateMentor = (updated: Partial<Mentor>) => {
+    setMentor((prev) => {
+      if (!prev) return prev;
+      const merged = { ...prev, ...updated };
+      localStorage.setItem('mentor', JSON.stringify(merged));
+      return merged;
+    });
+  };
+
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('mentor');
@@ -57,7 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ token, mentor, login, logout }}>
+    <AuthContext.Provider value={{ token, mentor, login, logout, updateMentor }}>
       {children}
     </AuthContext.Provider>
   );
