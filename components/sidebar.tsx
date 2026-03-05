@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import {
-  ChevronsUpDown,
   LifeBuoy,
   Users,
   Video,
@@ -26,7 +25,11 @@ export function Sidebar() {
         />
       </div>
 
-      <div className="mb-12 flex items-center gap-3">
+      <button
+        type="button"
+        onClick={() => router.push("/perfil")}
+        className="mb-12 flex w-full items-center gap-3 rounded-lg p-1 transition-colors hover:bg-zinc-50"
+      >
         <div className="relative h-[25px] w-[25px] overflow-hidden rounded-lg bg-zinc-100">
           {mentor?.avatarUrl && (
             <Image
@@ -38,18 +41,11 @@ export function Sidebar() {
           )}
         </div>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-base font-medium text-zinc-900">
+          <p className="truncate text-left text-base font-medium text-zinc-900">
             {mentor?.name ?? "Carregando..."}
           </p>
         </div>
-        <button
-          type="button"
-          aria-label="Menu"
-          className="text-zinc-300 hover:text-zinc-500"
-        >
-          <ChevronsUpDown className="size-5" />
-        </button>
-      </div>
+      </button>
 
       <nav className="space-y-2">
         <p className="mb-4 text-[10px] font-medium uppercase tracking-wider text-zinc-500">
