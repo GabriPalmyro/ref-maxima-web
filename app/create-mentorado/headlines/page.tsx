@@ -2,7 +2,7 @@
 
 import { ArrowLeft, RefreshCw } from "lucide-react";
 import { LottieLoading } from "@/components/lottie-loading";
-import { LottieAiLoading } from "@/components/lottie-ai-loading";
+import { FullScreenGenerationLoading } from "@/components/fullscreen-generation-loading";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { api } from "@/lib/api";
@@ -70,9 +70,28 @@ function HeadlinesContent() {
 
   if (isLoading) {
     return (
-      <div className="bg-[#F9F8F5]">
-        <LottieAiLoading message="Gerando headlines..." size="w-40" />
-      </div>
+      <FullScreenGenerationLoading
+        messages={[
+          "Analisando o posicionamento...",
+          "Criando headlines estratégicas...",
+          "Refinando a comunicação...",
+          "Testando variações...",
+          "Finalizando as headlines...",
+        ]}
+      />
+    );
+  }
+
+  if (isRegenerating) {
+    return (
+      <FullScreenGenerationLoading
+        messages={[
+          "Regenerando headlines...",
+          "Criando novas variações...",
+          "Refinando a comunicação...",
+          "Finalizando as headlines...",
+        ]}
+      />
     );
   }
 
