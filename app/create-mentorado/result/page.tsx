@@ -9,6 +9,7 @@ import { TypewriterText } from "@/components/typewriter-text";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { api } from "@/lib/api";
+import { downloadReportPdf } from "@/lib/pdf";
 
 interface Report {
   id: string;
@@ -58,7 +59,9 @@ function ResultContent() {
   const [copied, setCopied] = useState(false);
   const [showTypewriter, setShowTypewriter] = useState(false);
   const [typewriterComplete, setTypewriterComplete] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
 
+  const reportContentRef = useRef<HTMLDivElement>(null);
   const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pollStartRef = useRef<number>(0);
 
@@ -254,9 +257,22 @@ function ResultContent() {
               </p>
               <button
                 type="button"
-                onClick={() => window.print()}
-                className="text-zinc-400 transition-colors hover:text-zinc-600"
-                aria-label="Exportar"
+                onClick={async () => {
+                  if (!reportContentRef.current || !report) return;
+                  setIsDownloading(true);
+                  try {
+                    await downloadReportPdf(
+                      reportContentRef.current,
+                      ROUND_LABELS[round],
+                      "Mentorado"
+                    );
+                  } finally {
+                    setIsDownloading(false);
+                  }
+                }}
+                disabled={isDownloading}
+                className="text-zinc-400 transition-colors hover:text-zinc-600 disabled:opacity-50"
+                aria-label="Baixar PDF"
               >
                 <FileDown className="size-5" />
               </button>
@@ -284,19 +300,38 @@ function ResultContent() {
               </h2>
 
               {/* Report content */}
-              {showTypewriter && !typewriterComplete ? (
+              {showTypewriter && !typewriterComplete && !report.structuredContent ? (
                 <TypewriterText
                   text={report.rawResponse ?? ""}
                   speed={5}
                   onComplete={() => setTypewriterComplete(true)}
                 />
               ) : (
+                <div className={showTypewriter ? "animate-fade-in-up" : ""}>
+                  <ReportRenderer
+                    type={report.type}
+                    structuredContent={report.structuredContent}
+                    rawResponse={report.rawResponse}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Hidden container for PDF capture */}
+            <div className="fixed left-[-9999px] top-0 w-[550px]">
+              <div ref={reportContentRef} className="bg-white p-10">
+                <h2 className="mb-1 text-[24px] font-semibold text-black">
+                  {ROUND_LABELS[round]}
+                </h2>
+                <h3 className="mb-4 text-[20px] font-medium text-black">
+                  {report.title}
+                </h3>
                 <ReportRenderer
                   type={report.type}
                   structuredContent={report.structuredContent}
                   rawResponse={report.rawResponse}
                 />
-              )}
+              </div>
             </div>
 
             {/* Bottom gradient overlay */}
@@ -333,7 +368,7 @@ function ResultContent() {
         )}
 
         {/* Actions */}
-        {!isPolling && !pollError && (!showTypewriter || typewriterComplete) && (
+        {!isPolling && !pollError && (!showTypewriter || typewriterComplete || !!report?.structuredContent) && (
           <div className="mt-4 flex shrink-0 flex-col items-center gap-4">
             <button
               type="button"

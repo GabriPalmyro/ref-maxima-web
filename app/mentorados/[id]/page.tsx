@@ -14,8 +14,9 @@ import { Sidebar } from "@/components/sidebar";
 import { ReportRenderer } from "@/components/report-renderer";
 import { LottieLoading } from "@/components/lottie-loading";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState, type ComponentType } from "react";
+import { useEffect, useRef, useState, type ComponentType } from "react";
 import { api } from "@/lib/api";
+import { downloadReportPdf, downloadAllReportsPdf } from "@/lib/pdf";
 import { InstagramPhonePreview } from "@/components/instagram-phone-preview";
 
 interface Mentee {
@@ -106,6 +107,9 @@ export default function MenteeDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [instagramDraft, setInstagramDraft] = useState<InstagramDraftResponse | null>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const reportContentRef = useRef<HTMLDivElement>(null);
+  const allReportsRef = useRef<(HTMLDivElement | null)[]>([]);
 
   useEffect(() => {
     async function load() {
@@ -161,21 +165,39 @@ export default function MenteeDetailPage() {
     setSelectedReport(null);
   };
 
-  const handlePrint = () => {
-    if (!selectedReport?.rawResponse || !mentee) return;
-    const printWindow = window.open("", "_blank");
-    if (!printWindow) return;
-    printWindow.document.write(`
-      <html><head><title>${REPORT_LABELS[selectedReport.type] ?? selectedReport.type} - ${mentee.name}</title>
-      <style>body{font-family:Inter,sans-serif;padding:40px;line-height:1.6;color:#333}h1{font-size:20px;margin-bottom:8px}h2{font-size:14px;color:#666;margin-bottom:24px}pre{white-space:pre-wrap;font-family:Inter,sans-serif;font-size:14px}</style>
-      </head><body>
-      <h1>${REPORT_LABELS[selectedReport.type] ?? selectedReport.type}</h1>
-      <h2>${mentee.name}</h2>
-      <pre>${selectedReport.rawResponse}</pre>
-      </body></html>
-    `);
-    printWindow.document.close();
-    printWindow.print();
+  const handleDownloadPdf = async () => {
+    if (!reportContentRef.current || !selectedReport || !mentee) return;
+    setIsDownloading(true);
+    try {
+      await downloadReportPdf(
+        reportContentRef.current,
+        REPORT_LABELS[selectedReport.type] ?? selectedReport.type,
+        mentee.name
+      );
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  const handleDownloadAllPdfs = async () => {
+    if (!mentee) return;
+    const completedReports = REPORT_CARDS
+      .map((c) => getReport(c.type))
+      .filter((r): r is Report => !!r && r.status === "COMPLETED");
+    if (completedReports.length === 0) return;
+
+    setIsDownloading(true);
+    try {
+      const elements = allReportsRef.current.filter(
+        (el): el is HTMLDivElement => el !== null
+      );
+      const labels = completedReports.map(
+        (r) => REPORT_LABELS[r.type] ?? r.type
+      );
+      await downloadAllReportsPdf(elements, labels, mentee.name);
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   if (isLoading) {
@@ -229,9 +251,10 @@ export default function MenteeDetailPage() {
               </p>
               <button
                 type="button"
-                onClick={handlePrint}
-                className="text-zinc-400 transition-colors hover:text-zinc-600"
-                aria-label="Exportar"
+                onClick={handleDownloadPdf}
+                disabled={isDownloading}
+                className="text-zinc-400 transition-colors hover:text-zinc-600 disabled:opacity-50"
+                aria-label="Baixar PDF"
               >
                 <FileDown className="size-5" />
               </button>
@@ -239,16 +262,6 @@ export default function MenteeDetailPage() {
 
             {/* Body — scrollable */}
             <div className="relative flex-1 overflow-y-auto px-[89px] pb-[100px] pt-[96px]">
-              {/* Large background watermark */}
-              <div className="pointer-events-none absolute -right-16 top-[133px] select-none opacity-[0.06]">
-                <Image
-                  src="/images/asterisk.svg"
-                  alt=""
-                  width={310}
-                  height={352}
-                />
-              </div>
-
               {/* Small asterisk icon before title */}
               <Image
                 src="/images/asterisk.svg"
@@ -270,6 +283,25 @@ export default function MenteeDetailPage() {
                 rawResponse={selectedReport.rawResponse}
                 menteeName={mentee.name}
               />
+            </div>
+
+            {/* Hidden container for single report PDF capture */}
+            <div className="fixed left-[-9999px] top-0 w-[550px]">
+              <div ref={reportContentRef} className="bg-white p-10">
+                <h2 className="mb-1 text-[24px] font-semibold text-black">
+                  {REPORT_LABELS[selectedReport.type] ?? selectedReport.type}
+                </h2>
+                <p className="mb-6 text-[16px] text-zinc-500">{mentee.name}</p>
+                <h3 className="mb-4 text-[20px] font-medium text-black">
+                  {selectedReport.title}
+                </h3>
+                <ReportRenderer
+                  type={selectedReport.type}
+                  structuredContent={selectedReport.structuredContent}
+                  rawResponse={selectedReport.rawResponse}
+                  menteeName={mentee.name}
+                />
+              </div>
             </div>
 
             {/* Bottom gradient overlay — fixed at card bottom regardless of scroll */}
@@ -395,6 +427,19 @@ export default function MenteeDetailPage() {
                   </button>
                 );
               })()}
+
+              {/* Download all reports button */}
+              {REPORT_CARDS.every((c) => isCompleted(c.type)) && (
+                <button
+                  type="button"
+                  onClick={handleDownloadAllPdfs}
+                  disabled={isDownloading}
+                  className="flex h-[32px] w-[269px] items-center justify-center gap-2 rounded-[4px] border border-zinc-200 bg-white text-xs font-semibold text-zinc-700 shadow-sm transition-colors hover:bg-zinc-50 disabled:opacity-50"
+                >
+                  <FileDown className="size-4" />
+                  {isDownloading ? "Gerando PDF..." : "Baixar todos os relatórios"}
+                </button>
+              )}
             </div>
           </div>
 
@@ -411,6 +456,34 @@ export default function MenteeDetailPage() {
               />
             </div>
           )}
+        </div>
+        {/* Hidden containers for "download all" PDF capture */}
+        <div className="fixed left-[-9999px] top-0 w-[550px]">
+          {REPORT_CARDS.map((card, i) => {
+            const report = getReport(card.type);
+            if (!report || report.status !== "COMPLETED") return null;
+            return (
+              <div
+                key={card.type}
+                ref={(el) => { allReportsRef.current[i] = el; }}
+                className="bg-white p-10"
+              >
+                <h2 className="mb-1 text-[20px] font-semibold text-black">
+                  {REPORT_LABELS[report.type] ?? report.type}
+                </h2>
+                <p className="mb-6 text-[14px] text-zinc-500">{mentee.name}</p>
+                <h3 className="mb-4 text-[18px] font-medium text-black">
+                  {report.title}
+                </h3>
+                <ReportRenderer
+                  type={report.type}
+                  structuredContent={report.structuredContent}
+                  rawResponse={report.rawResponse}
+                  menteeName={mentee.name}
+                />
+              </div>
+            );
+          })}
         </div>
       </main>
     </div>
