@@ -4,7 +4,9 @@ import {
   ArrowLeft,
   Check,
   FileDown,
+  Instagram,
   Megaphone,
+  Pencil,
   Trophy,
   User,
   X,
@@ -108,6 +110,10 @@ export default function MenteeDetailPage() {
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [instagramDraft, setInstagramDraft] = useState<InstagramDraftResponse | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editInstagram, setEditInstagram] = useState("");
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
   const reportContentRef = useRef<HTMLDivElement>(null);
   const allReportsRef = useRef<(HTMLDivElement | null)[]>([]);
 
@@ -197,6 +203,34 @@ export default function MenteeDetailPage() {
       await downloadAllReportsPdf(elements, labels, mentee.name);
     } finally {
       setIsDownloading(false);
+    }
+  };
+
+  const startEditing = () => {
+    if (!mentee) return;
+    setEditName(mentee.name);
+    setEditInstagram(mentee.instagram ?? "");
+    setIsEditingProfile(true);
+  };
+
+  const cancelEditing = () => {
+    setIsEditingProfile(false);
+  };
+
+  const saveProfile = async () => {
+    if (!mentee) return;
+    setIsSavingProfile(true);
+    try {
+      const updated = await api.patch<Mentee>(`/mentor/mentees/${mentee.id}`, {
+        name: editName.trim(),
+        instagram: editInstagram.trim() || undefined,
+      });
+      setMentee({ ...mentee, ...updated });
+      setIsEditingProfile(false);
+    } catch {
+      // error handled by api.ts
+    } finally {
+      setIsSavingProfile(false);
     }
   };
 
@@ -355,6 +389,81 @@ export default function MenteeDetailPage() {
             <ArrowLeft className="size-3" />
             Voltar para dashboard
           </button>
+        </div>
+
+        {/* Mentee info */}
+        <div className="flex items-center gap-4 px-8 pt-6">
+          {mentee.avatarUrl ? (
+            <Image
+              src={mentee.avatarUrl}
+              alt={mentee.name}
+              width={48}
+              height={48}
+              className="size-12 rounded-full object-cover"
+            />
+          ) : (
+            <div className="flex size-12 items-center justify-center rounded-full bg-zinc-100">
+              <User className="size-5 text-zinc-400" />
+            </div>
+          )}
+
+          {isEditingProfile ? (
+            <div className="flex items-center gap-3">
+              <input
+                type="text"
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                placeholder="Nome"
+                className="h-9 w-48 rounded-md border border-zinc-300 px-3 text-sm text-zinc-800 outline-none focus:border-[#AB926E] focus:ring-1 focus:ring-[#AB926E]"
+              />
+              <div className="flex items-center gap-1">
+                <span className="text-sm text-zinc-400">@</span>
+                <input
+                  type="text"
+                  value={editInstagram}
+                  onChange={(e) => setEditInstagram(e.target.value.replace(/^@/, ""))}
+                  placeholder="instagram"
+                  className="h-9 w-40 rounded-md border border-zinc-300 px-3 text-sm text-zinc-800 outline-none focus:border-[#AB926E] focus:ring-1 focus:ring-[#AB926E]"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={saveProfile}
+                disabled={isSavingProfile || !editName.trim()}
+                className="flex h-9 items-center gap-1.5 rounded-md bg-[#AB926E] px-4 text-xs font-semibold text-white transition-colors hover:bg-[#9a8362] disabled:opacity-50"
+              >
+                <Check className="size-3.5" />
+                Salvar
+              </button>
+              <button
+                type="button"
+                onClick={cancelEditing}
+                className="flex h-9 items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-4 text-xs font-semibold text-zinc-600 transition-colors hover:bg-zinc-50"
+              >
+                Cancelar
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-3">
+              <div>
+                <h1 className="text-lg font-semibold text-zinc-800">{mentee.name}</h1>
+                {mentee.instagram && (
+                  <p className="flex items-center gap-1 text-sm text-zinc-500">
+                    <Instagram className="size-3.5" />
+                    @{mentee.instagram.replace(/^@/, "")}
+                  </p>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={startEditing}
+                className="flex size-8 items-center justify-center rounded-md text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600"
+                aria-label="Editar perfil"
+              >
+                <Pencil className="size-4" />
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Content area */}
