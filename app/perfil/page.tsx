@@ -1,30 +1,20 @@
 "use client";
 
-import { useState, useRef } from "react";
-import { ArrowLeft, Camera } from "lucide-react";
+import { useState } from "react";
+import { ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
 import { api } from "@/lib/api";
 import { Sidebar } from "@/components/sidebar";
-import Image from "next/image";
+import { AvatarUploader } from "@/components/avatar-uploader";
 
 export default function PerfilPage() {
   const router = useRouter();
   const { mentor, updateMentor } = useAuth();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
   const [name, setName] = useState(mentor?.name ?? "");
-  const [avatarPreview, setAvatarPreview] = useState(mentor?.avatarUrl ?? "");
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [success, setSuccess] = useState(false);
-
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setAvatarFile(file);
-    setAvatarPreview(URL.createObjectURL(file));
-  };
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -68,31 +58,13 @@ export default function PerfilPage() {
 
         <div className="max-w-md space-y-6">
           {/* Avatar */}
-          <div className="flex flex-col items-center gap-3">
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="group relative h-24 w-24 overflow-hidden rounded-full bg-zinc-100"
-            >
-              {avatarPreview ? (
-                <Image src={avatarPreview} alt="Avatar" fill className="object-cover" />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center text-2xl font-semibold text-zinc-400">
-                  {mentor?.name?.[0]?.toUpperCase() ?? "?"}
-                </div>
-              )}
-              <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
-                <Camera className="size-6 text-white" />
-              </div>
-            </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleAvatarChange}
-              className="hidden"
+          <div className="flex flex-col items-center gap-1">
+            <AvatarUploader
+              currentImageUrl={mentor?.avatarUrl}
+              placeholder={mentor?.name?.[0]?.toUpperCase()}
+              onFileSelected={setAvatarFile}
+              label="Alterar foto"
             />
-            <p className="text-xs text-zinc-400">Clique para alterar a foto</p>
           </div>
 
           {/* Name */}

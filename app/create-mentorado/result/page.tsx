@@ -1,5 +1,6 @@
 "use client";
 
+import { CorrectionDialog } from "@/components/correction-dialog";
 import { Copy, FileDown } from "lucide-react";
 import Image from "next/image";
 import { FullScreenGenerationLoading } from "@/components/fullscreen-generation-loading";
@@ -60,6 +61,8 @@ function ResultContent() {
   const [showTypewriter, setShowTypewriter] = useState(false);
   const [typewriterComplete, setTypewriterComplete] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [showCorrectionDialog, setShowCorrectionDialog] = useState(false);
+  const [isCorrectingReport, setIsCorrectingReport] = useState(false);
 
   const reportContentRef = useRef<HTMLDivElement>(null);
   const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -171,10 +174,26 @@ function ResultContent() {
   };
 
   const handleCorrect = () => {
-    if (round === 2) {
-      router.push(`/create-mentorado/headlines?menteeId=${menteeId}`);
-    } else {
-      router.push(`/create-mentorado/form?round=${round}&menteeId=${menteeId}`);
+    setShowCorrectionDialog(true);
+  };
+
+  const handleCorrectionSubmit = async (correction: string) => {
+    if (!report) return;
+    setIsCorrectingReport(true);
+    try {
+      await api.post(
+        `/mentor/mentees/${menteeId}/reports/${report.id}/correct`,
+        { correction }
+      );
+      setShowCorrectionDialog(false);
+      setReport(null);
+      setShowTypewriter(false);
+      setTypewriterComplete(false);
+      setIsPolling(true);
+    } catch {
+      // api.ts already shows friendly errors
+    } finally {
+      setIsCorrectingReport(false);
     }
   };
 
@@ -391,6 +410,13 @@ function ResultContent() {
           </div>
         )}
       </div>
+
+      <CorrectionDialog
+        open={showCorrectionDialog}
+        onClose={() => setShowCorrectionDialog(false)}
+        onSubmit={handleCorrectionSubmit}
+        isSubmitting={isCorrectingReport}
+      />
     </div>
   );
 }

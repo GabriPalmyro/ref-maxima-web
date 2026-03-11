@@ -5,6 +5,7 @@ import {
   LifeBuoy,
   Users,
   Video,
+  LogOut,
 } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
 import { useRouter } from "next/navigation";
@@ -65,29 +66,12 @@ export function Sidebar() {
         </span>
       </nav>
 
-      <div className="mt-6 overflow-hidden rounded-lg border border-zinc-100 bg-white shadow-sm">
-        <div className="relative flex h-[100px] items-center justify-center bg-zinc-100">
-          <Image
-            src="/images/home/video.svg"
-            alt="Tutorial"
-            fill
-            className="object-cover"
-          />
-          <div className="relative flex size-8 items-center justify-center rounded-full bg-white/80 shadow">
-            <Video className="size-4 text-zinc-700" />
-          </div>
-        </div>
-        <p className="px-3 py-2 text-xs font-medium text-zinc-700">
-          Assistir tutorial
-        </p>
-      </div>
-
       <div className="flex-1" />
 
       <div className="space-y-3">
         <button
           type="button"
-          className="flex w-full items-center gap-2.5 text-sm text-zinc-400 opacity-50 hover:text-zinc-700"
+          className="flex w-full items-center gap-2.5 text-sm text-zinc-500 transition-colors hover:text-zinc-700"
         >
           <LifeBuoy className="size-[18px]" strokeWidth={1.5} />
           Ajuda & Suporte
@@ -95,8 +79,9 @@ export function Sidebar() {
         <button
           type="button"
           onClick={logout}
-          className="w-full text-left text-sm text-zinc-300 opacity-[0.22] hover:text-zinc-500"
+          className="flex w-full items-center gap-2.5 text-sm text-zinc-400 transition-colors hover:text-red-500"
         >
+          <LogOut className="size-[18px]" strokeWidth={1.5} />
           Sair
         </button>
       </div>

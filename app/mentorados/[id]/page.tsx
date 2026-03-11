@@ -469,7 +469,7 @@ export default function MenteeDetailPage() {
         {/* Content area */}
         <div className="flex flex-1 gap-0 px-8">
           {/* Left ~80%: cards area */}
-          <div className="flex flex-[4] flex-col items-center justify-center">
+          <div className="flex flex-[4] flex-col items-center pt-12">
             {/* Headline */}
             {headline && (
               <p className="mx-auto mb-16 max-w-[465px] text-center text-base font-medium leading-snug text-[#212121]">

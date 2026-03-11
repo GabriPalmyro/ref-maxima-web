@@ -159,11 +159,17 @@ export default function HomePage() {
           <button
             type="button"
             onClick={() => router.push("/create-mentorado")}
-            className="flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-medium text-zinc-700 shadow hover:bg-zinc-50"
+            className="relative flex h-[32px] items-center overflow-hidden rounded-[4px] bg-white shadow-[0px_2px_4px_-1px_rgba(0,0,0,0.06)] hover:brightness-[0.97]"
           >
-            Novo mentorado
-            <span className="mx-1 h-4 w-px bg-zinc-200" />
-            <Plus className="size-4" />
+            <span className="pointer-events-none absolute -left-[90px] -top-[10px] h-[73px] w-[70px] rounded-full bg-[#ABA56E] opacity-[0.66] blur-[56px]" />
+            <span className="pointer-events-none absolute left-[70px] -top-[10px] h-[73px] w-[70px] rounded-full bg-[#ABA56E] opacity-[0.66] blur-[56px]" />
+            <span className="relative px-3 text-xs font-semibold leading-4 text-[#71717a]">
+              Novo mentorado
+            </span>
+            <span className="relative h-full w-px bg-[#7A7A79] opacity-30" />
+            <span className="relative flex size-8 items-center justify-center">
+              <Plus className="size-4 text-[#71717a]" />
+            </span>
           </button>
         </div>
 
@@ -176,12 +182,9 @@ export default function HomePage() {
             <p className="text-[12px] text-zinc-500">
               Conheça o tutorial completo da plataforma.
             </p>
-            <button
-              type="button"
-              className="mt-1 w-fit rounded-md bg-white px-3 py-1.5 text-[12px] font-medium text-zinc-700 shadow hover:bg-zinc-50"
-            >
-              Assistir tutorial
-            </button>
+            <span className="mt-1 inline-block w-fit rounded-md bg-zinc-100 px-3 py-1.5 text-[12px] font-medium text-zinc-400">
+              Em breve
+            </span>
           </div>
           <div className="relative h-[134px] w-[200px] shrink-0">
             <Image

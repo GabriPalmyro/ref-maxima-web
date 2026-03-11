@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useAuth } from "@/contexts/auth-context";
 import { api } from "@/lib/api";
+import { AvatarUploader } from "@/components/avatar-uploader";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -16,6 +17,7 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,6 +29,15 @@ export default function RegisterPage() {
         { name, email, password }
       );
       await login(data.accessToken);
+
+      if (avatarFile) {
+        try {
+          await api.upload("/mentor/profile/avatar", avatarFile);
+        } catch {
+          // Avatar upload is non-blocking — registration succeeded
+        }
+      }
+
       router.push("/home");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro ao criar conta");
@@ -71,6 +82,16 @@ export default function RegisterPage() {
               {error}
             </div>
           )}
+
+          {/* Avatar */}
+          <div className="mb-4 flex justify-center">
+            <AvatarUploader
+              size={80}
+              onFileSelected={setAvatarFile}
+              onError={setError}
+              label="Adicionar foto"
+            />
+          </div>
 
           {/* Form */}
           <form className="space-y-4" onSubmit={handleSubmit}>

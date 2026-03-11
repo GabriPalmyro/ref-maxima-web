@@ -1,6 +1,7 @@
 "use client";
 
-import { ArrowLeft, TriangleAlert, User } from "lucide-react";
+import { ArrowLeft, TriangleAlert } from "lucide-react";
+import { AvatarUploader } from "@/components/avatar-uploader";
 import { LottieSpinner } from "@/components/lottie-spinner";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -17,6 +18,7 @@ export default function CreateMentoradoPage() {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,6 +31,15 @@ export default function CreateMentoradoPage() {
         instagram: formData.instagram || undefined,
         phone: formData.phone || undefined,
       });
+
+      if (avatarFile) {
+        try {
+          await api.upload(`/mentor/mentees/${mentee.id}/avatar`, avatarFile);
+        } catch {
+          // Avatar upload is non-blocking — mentee was already created
+        }
+      }
+
       router.push(`/create-mentorado/presentation?menteeId=${mentee.id}`);
     } catch (err) {
       setError(
@@ -70,14 +81,11 @@ export default function CreateMentoradoPage() {
             </div>
 
             <div className="mb-6 flex justify-center">
-              <div className="flex cursor-pointer flex-col items-center gap-2">
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-zinc-100">
-                  <User className="size-8 text-zinc-300" fill="currentColor" />
-                </div>
-                <span className="text-xs text-zinc-500 underline decoration-zinc-300 underline-offset-2 hover:text-zinc-700">
-                  Enviar foto
-                </span>
-              </div>
+              <AvatarUploader
+                size={64}
+                onFileSelected={setAvatarFile}
+                onError={setError}
+              />
             </div>
 
             {error && (
