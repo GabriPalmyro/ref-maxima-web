@@ -9,6 +9,10 @@ export function middleware(request: NextRequest) {
   const isPublic =
     pathname === '/' ||
     pathname === '/register' ||
+    pathname === '/suporte' ||
+    pathname === '/marketing' ||
+    pathname === '/termos' ||
+    pathname === '/privacidade' ||
     pathname.startsWith('/api/') ||
     pathname.startsWith('/_next/');
   if (isPublic) return NextResponse.next();
